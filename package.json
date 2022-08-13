@@ -1,6 +1,11 @@
 {
   "name": "monorepo-root",
   "private": true,
+  "pnpm": {
+    "overrides": {
+      "@types/eslint": "7.29.0"
+    }
+  },
   "volta": {
     "node": "16.16.0"
   }
