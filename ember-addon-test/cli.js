@@ -5,6 +5,7 @@ import * as url from 'url';
 import { execa } from 'execa';
 import ci from 'ci-info';
 
+
 const PORT = process.env.PORT || 5137;
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
@@ -20,27 +21,11 @@ let args = process.argv.slice(2);
 let command = args[0];
 
 if (command === 'test') {
-  await execa(bin, [
-    '--config', config,
-    // '--port', PORT,
-    '--mode', 'development',
-    'build', entry,
-  ], {
-    cwd: process.cwd(),
-    stdio: 'inherit',
-  });
+  let tsNode = path.join(__dirname, 'node_modules/.bin/ts-node');
+  let launcher = path.join(__dirname, 'cli/launcher.mts');
 
-  let testemArgs = [];
-  if (!ci.isCI) {
-    testemArgs.push('--growl');
-  }
+  await execa(tsNode, ['--esm', launcher]);
 
-  await execa(testem, [
-    'ci',
-    '--port', PORT,
-    '--file', testemConfig,
-    ...testemArgs
-  ], { stdio: 'inherit' });
 } else {
   // Dev mode!
   execa(bin, ['--config', config, '--port', PORT, ...args], {
