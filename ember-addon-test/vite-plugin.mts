@@ -29,6 +29,7 @@ interface Options {
 }
 
 const qunitCss = nm('qunit/qunit/qunit.css');
+const testemJs = nm('testem/public/testem/qunit_adapter.js');
 
 export const plugins = (options: Options = {}): PluginOption[] => {
   let enableTS = options.ts ?? true;
@@ -43,6 +44,7 @@ export const plugins = (options: Options = {}): PluginOption[] => {
 
   result.push(...[
     redirect({
+      '/eat/testem.js': testemJs,
       '/eat/qunit.css': qunitCss,
       '/eat/setup-hooks.js': join(__dirname, '_setup-hooks.js'),
     }),

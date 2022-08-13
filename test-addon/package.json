@@ -5,6 +5,7 @@
     "test": "addon-test"
   },
   "devDependencies": {
-    "ember-addon-test": "workspace:../ember-addon-test"
+    "ember-addon-test": "workspace:../ember-addon-test",
+    "ember-addon-test-app": "workspace:../ember-addon-test-app"
   }
 }

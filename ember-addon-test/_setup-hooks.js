@@ -1,5 +1,8 @@
 import * as QUnit from 'qunit';
 
+/**
+  * TODO: Only send these statuses in development
+  */
 function sendStatus(status, details) {
   fetch('/_test-status', {
     method: 'POST',
@@ -28,4 +31,3 @@ QUnit.testStart(details => {
 QUnit.begin(details => {
   sendStatus('begin', details);
 })
-
