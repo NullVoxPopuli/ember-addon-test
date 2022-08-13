@@ -87,21 +87,10 @@ export const testReporter: Connect.NextHandleFunction = (req, res, next) => {
         console.clear();
         readTests(details);
         buildUI(details);
-        ui.run();
+        ui.run().catch(() => { /* errors caught manually */ });
         break;
       }
       case 'done': {
-
-        ui.add({
-          title: `Completed in ${details.runtime}ms`,
-          task: () => {
-            if (details.failed > 0) {
-              return Promise.reject();
-            }
-
-            return Promise.resolve();
-          },
-        });
 
         // if any tests are still pending, it's possible
         // we just ran a single test. let's mark all the others
@@ -109,6 +98,17 @@ export const testReporter: Connect.NextHandleFunction = (req, res, next) => {
         tests
           .filter(test => test.status === 'pending')
           .forEach(test => test.skip());
+
+        ui.add({
+          title: `Completed in ${details.runtime}ms`,
+          task: () => {
+            if (details.failed > 0) {
+              throw (new Error(`${details.failed} failed`));
+            }
+
+            return Promise.resolve();
+          },
+        });
 
         // if (process.env.VITE_CI) {
         //   if (details.failed === 0) {
