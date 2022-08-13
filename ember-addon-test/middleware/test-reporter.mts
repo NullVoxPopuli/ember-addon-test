@@ -44,30 +44,60 @@ function readTests(details) {
   tests = t.map(info => new Test(info.name, info));
 }
 
-function buildUI(details) {
-  let uiForModule = (moduleInfo) => {
-    let testInstances = moduleInfo.tests
-      .map((testInfo) => {
-        return tests.find(test => test.name === testInfo.name)
-      })
-      .filter(Boolean);
+function taskForTest(test) {
+  return {
+    title: test.name,
+    skip: () => test.info.skip,
+    task: (ctx, task) => {
+      test.task = task;
+      return test.promise;
+    },
+  }
+}
 
-    return {
-      title: moduleInfo.name,
-      task: () => new Listr(testInstances.map(test => {
-        return {
-          title: test.name,
-          skip: () => test.info.skip,
-          task: (ctx, task) => {
-            test.task = task;
-            return test.promise;
-          },
-        }
-      })),
-    }
+let moduleInfos = [];
+let moduleTasks = {};
+
+function startTest({ name, module, testId }) {
+  let moduleInfo = moduleInfos.find(moduleInfo => moduleInfo.tests.some(test => test.testId === testId));
+
+  if (!moduleInfo) {
+    ui = new Listr([{
+      title: name,
+      task: () => {throw new Error(name)}
+    }])
+    ui.run().catch(() => { /* errors caught manually */ });
+    return;
   }
 
-  ui = new Listr(details.modules.map(uiForModule));
+  if (!ui) {
+    ui = new Listr([]);
+  }
+
+  let moduleTask = moduleTasks[moduleInfo.moduleId];
+
+  if (!moduleTask) {
+    moduleTask = {
+      title: moduleInfo.name,
+      task: () => {
+        let test = tests.find(test => test.info.testId === testId);
+        let instance = new Listr([taskForTest(test)]);
+
+        moduleTask.ui = instance;
+
+        return instance;
+      }
+    }
+
+    moduleTasks[moduleInfo.moduleId] = moduleTask;
+
+    ui.add(moduleTask)
+  } else {
+    let test = tests.find(test => test.info.testId === testId);
+    moduleTask.ui.add(taskForTest(test));
+  }
+
+  ui.run().catch(() => { /* errors caught manually */ });
 }
 
 /**
@@ -84,10 +114,12 @@ export const testReporter: Connect.NextHandleFunction = (req, res, next) => {
 
     switch (status) {
       case 'begin': {
+        ui = null;
+        tests = null;
+        moduleTasks = {};
+        moduleInfos = details.modules;
         console.clear();
         readTests(details);
-        buildUI(details);
-        ui.run().catch(() => { /* errors caught manually */ });
         break;
       }
       case 'done': {
@@ -120,6 +152,7 @@ export const testReporter: Connect.NextHandleFunction = (req, res, next) => {
         break;
       }
       case 'testStart': {
+        startTest(details);
         tests.find(x => x.name === details.name)?.start();
         break;
       }
