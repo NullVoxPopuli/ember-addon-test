@@ -20,6 +20,11 @@ or
 npm exec addon-test
 ```
 
+**In CI**
+
+Tests will run to completion with exit status 0 for success and 1 for failure. This is determined by [ci-info][npm-ci-info] in the shell env.
+[npm-ci-info]: https://www.npmjs.com/package/ci-info
+
 ## Conventions
 
 a file named `/tests/setup.ts` must exist so that your tests can be bootstrapped.

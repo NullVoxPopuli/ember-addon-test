@@ -16,6 +16,7 @@
     "module": "ESNext",
     "target": "ESNext",
     // Features
+    "esModuleInterop": true,
     "experimentalDecorators": true,
     "allowJs": false,
     "allowSyntheticDefaultImports": true,

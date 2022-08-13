@@ -1,4 +1,7 @@
 {
   "name": "monorepo-root",
-  "private": true
+  "private": true,
+  "volta": {
+    "node": "16.16.0"
+  }
 }

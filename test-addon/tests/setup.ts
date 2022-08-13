@@ -5,4 +5,3 @@ setup(QUnit.assert);
 
 import.meta.glob('./**/*test.{js,ts}', { eager: true });
 
-// QUnit.start();

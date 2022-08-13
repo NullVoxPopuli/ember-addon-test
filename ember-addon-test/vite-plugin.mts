@@ -2,11 +2,14 @@ import { type Plugin, type PluginOption } from 'vite';
 import checker from 'vite-plugin-checker';
 import redirect from 'vite-plugin-redirect';
 // import babel from 'vite-plugin-babel';
+import bodyParser from 'body-parser';
+
 
 import { join, dirname } from 'node:path';
-import * as fs from 'node:fs';
 import { createRequire } from 'node:module';
-import * as url from 'url';
+import * as url from 'node:url';
+import { testReporter } from './middleware/test-reporter.mjs';
+import { selfHtml } from './middleware/self-html.mjs';
 
 const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 const require = createRequire(import.meta.url);
@@ -26,7 +29,6 @@ interface Options {
 }
 
 const qunitCss = nm('qunit/qunit/qunit.css');
-const selfHtml = (join(__dirname, 'index.html'));
 
 export const plugins = (options: Options = {}): PluginOption[] => {
   let enableTS = options.ts ?? true;
@@ -41,7 +43,8 @@ export const plugins = (options: Options = {}): PluginOption[] => {
 
   result.push(...[
     redirect({
-      '/qunit.css': qunitCss,
+      '/eat/qunit.css': qunitCss,
+      '/eat/setup-hooks.js': join(__dirname, '_setup-hooks.js'),
     }),
     emberAddon(),
   ]);
@@ -53,20 +56,9 @@ function emberAddon(options: Options = {}): Plugin {
   return {
     name: 'ember-addon-test-support',
     configureServer(server) {
-      server.middlewares.use((req, res, next) => {
-        if (req.url === '/' && req.method === 'GET') {
-
-          let stream = fs.createReadStream(selfHtml);
-          stream.pipe(res);
-          stream.on('end', () => {
-            stream.destroy();
-          });
-
-          return;
-        }
-
-        next();
-      });
+      server.middlewares.use(bodyParser.json());
+      server.middlewares.use(testReporter);
+      server.middlewares.use(selfHtml);
     },
     config: () => ({
       optimizeDeps: {
