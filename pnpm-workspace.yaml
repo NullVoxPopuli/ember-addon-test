@@ -1,0 +1,3 @@
+packages:
+  - "ember-addon-test"
+  - "test-addon"

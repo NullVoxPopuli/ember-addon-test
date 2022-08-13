@@ -1,0 +1,10 @@
+{
+  "name": "test-addon",
+  "private": true,
+  "scripts": {
+    "test": "addon-test"
+  },
+  "devDependencies": {
+    "ember-addon-test": "workspace:../ember-addon-test"
+  }
+}
