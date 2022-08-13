@@ -10,7 +10,8 @@ const html = join(__dirname, 'index.html');
 
 export const selfHtml: Connect.NextHandleFunction = (req, res, next) => {
 
-  if (req.url === '/' && req.method === 'GET') {
+  let url = req.url.split('?')[0];
+  if (url === '/' && req.method === 'GET') {
 
     let stream = fs.createReadStream(html);
     stream.pipe(res);

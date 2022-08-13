@@ -12,10 +12,17 @@ class Test {
     });
   }
 
+  task?: any;
   resolve?: (value: unknown) => void;
   reject?: () => void;
   promise?: Promise<unknown>;
-  status: 'pending' | 'running' | 'errored' | 'success' = 'pending';
+  status: 'pending' | 'skipped' | 'running' | 'errored' | 'success' = 'pending';
+
+  skip = () => {
+    this.resolve?.(0);
+    this.status = 'skipped';
+    this.task?.skip();
+  };
 
   start = () => this.status = 'running';
 
@@ -51,7 +58,10 @@ function buildUI(details) {
         return {
           title: test.name,
           skip: () => test.info.skip,
-          task: () => test.promise,
+          task: (ctx, task) => {
+            test.task = task;
+            return test.promise;
+          },
         }
       })),
     }
@@ -74,24 +84,39 @@ export const testReporter: Connect.NextHandleFunction = (req, res, next) => {
 
     switch (status) {
       case 'begin': {
+        console.clear();
         readTests(details);
         buildUI(details);
         ui.run();
         break;
       }
       case 'done': {
-        console.info('');
-        console.info(`Completed in ${details.runtime} ms`)
-        console.info(`  Passed: ${details.passed}`);
-        console.info(`  Failed: ${details.failed}`);
-        console.info(`   Total: ${details.total}`);
-        if (process.env.VITE_CI) {
-          if (details.failed === 0) {
-            process.exit(0);
-          } else {
-            process.exit(1);
-          }
-        }
+
+        ui.add({
+          title: `Completed in ${details.runtime}ms`,
+          task: () => {
+            if (details.failed > 0) {
+              return Promise.reject();
+            }
+
+            return Promise.resolve();
+          },
+        });
+
+        // if any tests are still pending, it's possible
+        // we just ran a single test. let's mark all the others
+        // as skipped.
+        tests
+          .filter(test => test.status === 'pending')
+          .forEach(test => test.skip());
+
+        // if (process.env.VITE_CI) {
+        //   if (details.failed === 0) {
+        //     process.exit(0);
+        //   } else {
+        //     process.exit(1);
+        //   }
+        // }
         break;
       }
       case 'testStart': {
@@ -103,6 +128,10 @@ export const testReporter: Connect.NextHandleFunction = (req, res, next) => {
         break;
       }
     }
+
+    res.statusCode = 200;
+    res.end();
+    return;
   }
 
   next();
